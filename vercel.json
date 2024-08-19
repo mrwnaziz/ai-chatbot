@@ -1,7 +1,7 @@
 {
     "functions": {
-        "lib/chat/actions.tsx": {
-            "maxDuration": 300
+      "app/**/*.ts": {
+        "maxDuration": 300
       }
     }
   }

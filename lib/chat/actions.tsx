@@ -26,9 +26,6 @@ import { SpinnerMessage, UserMessage } from '@/components/stocks/message'
 import { Chat, Message } from '@/lib/types'
 import { auth } from '@/auth'
 
-export const maxDuration = 300;
-
-
 async function fetchData(url: string): Promise<any> {
   const response = await fetch(url);
   if (!response.ok) {
