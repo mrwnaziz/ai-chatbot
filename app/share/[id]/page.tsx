@@ -9,6 +9,7 @@ import { AI, UIState, getUIStateFromAIState } from '@/lib/chat/actions'
 
 export const runtime = 'edge'
 export const preferredRegion = 'home'
+export const maxDuration = 300; 
 
 interface SharePageProps {
   params: {

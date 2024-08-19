@@ -3,6 +3,7 @@ import { SidebarDesktop } from '@/components/sidebar-desktop'
 interface ChatLayoutProps {
   children: React.ReactNode
 }
+export const maxDuration = 300; 
 
 export default async function ChatLayout({ children }: ChatLayoutProps) {
   return (

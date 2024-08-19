@@ -4,10 +4,11 @@ import { GeistMono } from 'geist/font/mono'
 
 import '@/app/globals.css'
 import { cn } from '@/lib/utils'
-import { TailwindIndicator } from '@/components/tailwind-indicator'
 import { Providers } from '@/components/providers'
 import { Header } from '@/components/header'
 import { Toaster } from '@/components/ui/sonner'
+
+export const maxDuration = 300; 
 
 export const metadata = {
   metadataBase: process.env.VERCEL_URL
