@@ -27,6 +27,8 @@ import { Chat, Message } from '@/lib/types'
 import { auth } from '@/auth'
 
 export const maxDuration = 300;
+
+
 async function fetchData(url: string): Promise<any> {
   const response = await fetch(url);
   if (!response.ok) {
@@ -96,7 +98,7 @@ function filterAndFormatData(data: any[], query: string, type: 'program' | 'even
 
 async function submitUserMessage(content: string) {
   'use server'
-  
+
   const aiState = getMutableAIState<typeof AI>()
 
   aiState.update({
