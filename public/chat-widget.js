@@ -37,11 +37,10 @@
     const baseUrl = getScriptBaseUrl();
     console.log("Base URL:", baseUrl);
 
-    
     // Function to check if the device is mobile
-     function isMobile() {
-            return window.innerWidth <= 768;
-        }
+    function isMobile() {
+        return window.innerWidth <= 768;
+    }
     
     // Styles for the widget
     const styles = `
@@ -59,6 +58,9 @@
             box-shadow: 0 5px 40px rgba(0,0,0,0.16);
             border-radius: 8px;
             overflow: hidden;
+            transition: all 0.3s ease-in-out;
+            transform: scale(0.95);
+            opacity: 0;
         }
         #chat-widget-iframe {
             border: none;
@@ -91,6 +93,7 @@
                 width: 100%;
                 height: 100%;
                 border-radius: 0;
+                transform: translateY(100%);
             }
         }
     `;
@@ -118,7 +121,7 @@
     // Append iframe to iframe container
     iframeContainer.appendChild(iframe);
 
-    // Create toggle button with new chat icon
+    // Create toggle button with chat icon
     const button = document.createElement('button');
     button.id = 'chat-widget-button';
     button.innerHTML = `
@@ -133,25 +136,59 @@
     document.body.appendChild(container);
     console.log("Widget container appended to body");
 
-    // Toggle iframe visibility
-    function toggleChat() {
-        if (iframeContainer.style.display === 'none') {
-            iframeContainer.style.display = 'block';
-            button.style.display = 'none';
-            if (window.innerWidth <= 768) {
+    // Function to adjust widget layout based on screen size
+    function adjustWidgetLayout() {
+        const isMobileView = isMobile();
+        if (iframeContainer.style.display !== 'none') {
+            if (isMobileView) {
                 iframeContainer.style.width = '100vw';
                 iframeContainer.style.height = '100vh';
                 container.style.bottom = '0';
                 container.style.right = '0';
+                iframeContainer.style.transform = 'translateY(0)';
+            } else {
+                iframeContainer.style.width = '400px';
+                iframeContainer.style.height = '600px';
+                container.style.bottom = '20px';
+                container.style.right = '20px';
+                iframeContainer.style.transform = 'scale(1)';
             }
         } else {
-            iframeContainer.style.display = 'none';
-            button.style.display = 'flex';
+            if (isMobileView) {
+                iframeContainer.style.transform = 'translateY(100%)';
+            } else {
+                iframeContainer.style.transform = 'scale(0.95)';
+            }
+        }
+    }
+
+    // Toggle iframe visibility
+    function toggleChat() {
+        const isMobileView = isMobile();
+        if (iframeContainer.style.display === 'none') {
+            iframeContainer.style.display = 'block';
+            setTimeout(() => {
+                adjustWidgetLayout();
+                iframeContainer.style.opacity = '1';
+            }, 10);
+            button.style.display = 'none';
+        } else {
+            iframeContainer.style.transform = isMobileView ? 'translateY(100%)' : 'scale(0.95)';
+            iframeContainer.style.opacity = '0';
+            setTimeout(() => {
+                iframeContainer.style.display = 'none';
+                button.style.display = 'flex';
+                container.style.bottom = '20px';
+                container.style.right = '20px';
+            }, 300);
         }
         console.log("Chat toggled");
     }
 
     button.addEventListener('click', toggleChat);
+
+    // Listen for window resize events
+    window.addEventListener('resize', adjustWidgetLayout);
 
     // Listen for messages from the iframe
     window.addEventListener('message', function(event) {
