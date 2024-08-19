@@ -15,7 +15,15 @@ export interface ChatMessageProps {
   message: Message
 }
 
+// Function to detect if the text is RTL (primarily for Arabic)
+function isRTL(text: string) {
+  const rtlChars = /[\u0591-\u07FF\uFB1D-\uFDFD\uFE70-\uFEFC]/
+  return rtlChars.test(text)
+}
+
 export function ChatMessage({ message, ...props }: ChatMessageProps) {
+  const isRTLText = isRTL(message.content)
+
   return (
     <div
       className={cn('group relative mb-4 flex items-start md:-ml-12')}
@@ -31,9 +39,15 @@ export function ChatMessage({ message, ...props }: ChatMessageProps) {
       >
         {message.role === 'user' ? <IconUser /> : <IconOpenAI />}
       </div>
-      <div className="flex-1 px-1 ml-4 space-y-2 overflow-hidden">
+      <div className={cn(
+        'flex-1 px-1 ml-4 space-y-2 overflow-hidden',
+        isRTLText ? 'text-right' : 'text-left'
+      )}>
         <MemoizedReactMarkdown
-          className="prose break-words dark:prose-invert prose-p:leading-relaxed prose-pre:p-0"
+          className={cn(
+            "prose break-words dark:prose-invert prose-p:leading-relaxed prose-pre:p-0",
+            isRTLText ? 'direction-rtl' : 'direction-ltr'
+          )}
           remarkPlugins={[remarkGfm, remarkMath]}
           components={{
             p({ children }) {

@@ -1,3 +1,4 @@
+import Script from 'next/script'
 import { GeistSans } from 'geist/font/sans'
 import { GeistMono } from 'geist/font/mono'
 
@@ -56,7 +57,14 @@ export default function RootLayout({ children }: RootLayoutProps) {
             <Header />
             <main className="flex flex-col flex-1 bg-muted/50">{children}</main>
           </div>
-          <TailwindIndicator />
+          <Script src="/chat-widget.js" />
+          <Script id="init-chat-widget">{`
+            window.onload = function() {
+              if (typeof ChatWidget !== 'undefined') {
+                ChatWidget.init("HvcE3WJTDj5RPzZGMKI3Ou0ZuvWtvos7");
+              }
+            };
+          `}</Script>
         </Providers>
       </body>
     </html>
