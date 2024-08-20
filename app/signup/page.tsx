@@ -3,8 +3,6 @@ import SignupForm from '@/components/signup-form'
 import { Session } from '@/lib/types'
 import { redirect } from 'next/navigation'
 
-export const maxDuration = 300; 
-
 export default async function SignupPage() {
   const session = (await auth()) as Session
 

@@ -92,10 +92,9 @@ function filterAndFormatData(data: any[], query: string, type: 'program' | 'even
   });
 }
 
-
 async function submitUserMessage(content: string) {
   'use server'
-
+  
   const aiState = getMutableAIState<typeof AI>()
 
   aiState.update({
