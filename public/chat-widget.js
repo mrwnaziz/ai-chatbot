@@ -1,48 +1,64 @@
-(function() {
-    console.log("Chat widget script started");
+(function () {
+    const allowedDomains = [
+        'hub.misk.org.sa',
+        'miskhubuat.misk.org.sa',
+        'youthdev.misk.org.sa',
+        '*.misk.org.sa',
+        '*.vercel.app',
+        '*.pages.dev',
+    ];
 
-    // Function to get URL parameters
-    function getUrlParameter(name) {
-        name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
-        var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
-        var results = regex.exec(location.search);
-        return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+    function isAllowedDomain(domain) {
+        return allowedDomains.some(pattern => {
+            if (pattern.startsWith('*.')) {
+                
+                const baseDomain = pattern.slice(2);
+                return domain === baseDomain || domain.endsWith('.' + baseDomain);
+            } else {
+                
+                return domain === pattern;
+            }
+        });
     }
 
-    // Check if we should show the widget
-    var showWidget = getUrlParameter('showChatWidget') === 'true' || window.SHOW_CHAT_WIDGET === true;
-    console.log("Show widget parameter:", getUrlParameter('showChatWidget'));
-    console.log("Show widget:", showWidget);
 
-    if (!showWidget) {
-        console.log("Widget not shown due to missing or false showChatWidget parameter");
-        return; // Don't show the widget if the parameter is not set
-    }
-
-    // Function to get the base URL of the script
+    
     function getScriptBaseUrl() {
         try {
             const scripts = document.getElementsByTagName('script');
             const currentScript = scripts[scripts.length - 1];
-            const scriptUrl = new URL(currentScript.src, window.location.origin);
-            console.log("Script URL:", scriptUrl.href);
+            const scriptUrl = new URL(currentScript.src);
             return scriptUrl.origin;
         } catch (error) {
-            console.warn('Failed to determine script base URL:', error);
             return window.location.origin;
         }
     }
 
-    // Get the base URL
+    
     const baseUrl = getScriptBaseUrl();
-    console.log("Base URL:", baseUrl);
+    
+    const currentDomain = window.location.hostname;
+    const isAllowed = isAllowedDomain(currentDomain);
+    
+    if (!isAllowed) {
+        
+        return; 
+    }
 
-    // Function to check if the device is mobile
+    
+    const isEmbedded = window.location.origin !== baseUrl;
+    
+
+    if (!isEmbedded) {
+        
+        return;
+    }
+
     function isMobile() {
         return window.innerWidth <= 768;
     }
+
     
-    // Styles for the widget
     const styles = `
         #chat-widget-container {
             position: fixed;
@@ -98,45 +114,62 @@
         }
     `;
 
-    // Create style element
+    
     const styleElement = document.createElement('style');
     styleElement.textContent = styles;
     document.head.appendChild(styleElement);
-    console.log("Styles appended to head");
+    
 
-    // Create widget container
+    
     const container = document.createElement('div');
     container.id = 'chat-widget-container';
 
-    // Create iframe container
+    
     const iframeContainer = document.createElement('div');
     iframeContainer.id = 'chat-widget-iframe-container';
 
-    // Create iframe
+    
     const iframe = document.createElement('iframe');
     iframe.id = 'chat-widget-iframe';
-    iframe.src = `${baseUrl}/new`;
-    console.log("Iframe src:", iframe.src);
+    iframe.src = `${baseUrl}/`;
+    
 
-    // Append iframe to iframe container
+    
     iframeContainer.appendChild(iframe);
 
-    // Create toggle button with chat icon
+    
     const button = document.createElement('button');
     button.id = 'chat-widget-button';
     button.innerHTML = `
-        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="#fff" viewBox="0 0 256 256"><path d="M200,48H136V16a8,8,0,0,0-16,0V48H56A32,32,0,0,0,24,80V192a32,32,0,0,0,32,32H200a32,32,0,0,0,32-32V80A32,32,0,0,0,200,48Zm16,144a16,16,0,0,1-16,16H56a16,16,0,0,1-16-16V80A16,16,0,0,1,56,64H200a16,16,0,0,1,16,16Zm-52-56H92a28,28,0,0,0,0,56h72a28,28,0,0,0,0-56Zm-24,16v24H116V152ZM80,164a12,12,0,0,1,12-12h8v24H92A12,12,0,0,1,80,164Zm84,12h-8V152h8a12,12,0,0,1,0,24ZM72,108a12,12,0,1,1,12,12A12,12,0,0,1,72,108Zm88,0a12,12,0,1,1,12,12A12,12,0,0,1,160,108Z"></path></svg>
+        <svg width="100" height="90" viewBox="0 0 100 90" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g clip-path="url(#clip0_13648_57885)">
+<path d="M70.9167 34.5626C70.9167 52.4762 56.3751 67.0178 38.4615 67.0178C31.4015 67.0178 24.7629 64.6996 19.4942 60.9062L4.53107 68.177L11.8019 53.3192C8.11379 48.0505 5.90093 41.6227 5.90093 34.668C6.0063 16.649 20.5479 2.10742 38.4615 2.10742C56.3751 2.10742 70.9167 16.649 70.9167 34.5626Z" fill="#00372A" stroke="white" stroke-width="4" stroke-miterlimit="10"/>
+<path d="M20.0211 22.8662H56.902" stroke="white" stroke-width="4" stroke-miterlimit="10"/>
+<path d="M20.0211 34.3521H56.902" stroke="white" stroke-width="4" stroke-miterlimit="10"/>
+<path d="M20.0211 45.7324H56.902" stroke="white" stroke-width="4" stroke-miterlimit="10"/>
+<path d="M38.2508 55.743C38.2508 71.233 50.7903 83.7725 66.2803 83.7725C72.392 83.7725 78.0822 81.7704 82.6133 78.5038L95.4689 84.7209L89.1465 71.8652C92.3077 67.3341 94.2044 61.7493 94.2044 55.8484C94.2044 40.3584 81.6649 27.8188 66.1749 27.8188C50.6849 27.8188 38.2508 40.253 38.2508 55.743Z" fill="#C2D500"/>
+<path d="M100 89.1465L82.824 80.822C77.8714 84.0886 72.1812 85.7746 66.2803 85.7746C49.7366 85.7746 36.1433 72.2867 36.1433 55.6376C36.1433 39.0938 49.6312 25.606 66.2803 25.606C82.9294 25.606 96.4173 39.0938 96.4173 55.6376C96.4173 61.4331 94.7313 67.018 91.6754 71.8652L100 89.1465ZM66.2803 29.9263C52.0548 29.9263 40.3583 41.5174 40.3583 55.7429C40.3583 69.9684 51.9494 81.665 66.2803 81.665C71.7597 81.665 77.0285 79.979 81.4542 76.8178L82.5079 76.0801L90.9378 80.1897L86.8282 71.7598L87.5659 70.7061C90.6217 66.3857 92.2023 61.2224 92.2023 55.8483C92.0969 41.5174 80.5058 29.9263 66.2803 29.9263Z" fill="white"/>
+<path d="M79.6628 63.2244C76.1854 66.7018 71.4436 68.8093 66.0695 68.8093C60.6955 68.8093 55.8483 66.5964 52.3709 63.0137" stroke="white" stroke-width="4" stroke-miterlimit="10"/>
+<path d="M58.0611 53.6355C60.389 53.6355 62.2761 51.7484 62.2761 49.4205C62.2761 47.0927 60.389 45.2056 58.0611 45.2056C55.7332 45.2056 53.8461 47.0927 53.8461 49.4205C53.8461 51.7484 55.7332 53.6355 58.0611 53.6355Z" fill="white"/>
+<path d="M74.078 53.6355C76.4059 53.6355 78.293 51.7484 78.293 49.4205C78.293 47.0927 76.4059 45.2056 74.078 45.2056C71.7501 45.2056 69.863 47.0927 69.863 49.4205C69.863 51.7484 71.7501 53.6355 74.078 53.6355Z" fill="white"/>
+</g>
+<defs>
+<clipPath id="clip0_13648_57885">
+<rect width="100" height="89.1465" fill="white"/>
+</clipPath>
+</defs>
+</svg>
     `;
 
-    // Append elements to container
+    
     container.appendChild(iframeContainer);
     container.appendChild(button);
 
-    // Append container to body
+    
     document.body.appendChild(container);
-    console.log("Widget container appended to body");
+    
 
-    // Function to adjust widget layout based on screen size
+    
     function adjustWidgetLayout() {
         const isMobileView = isMobile();
         if (iframeContainer.style.display !== 'none') {
@@ -162,7 +195,7 @@
         }
     }
 
-    // Toggle iframe visibility
+    
     function toggleChat() {
         const isMobileView = isMobile();
         if (iframeContainer.style.display === 'none') {
@@ -182,22 +215,20 @@
                 container.style.right = '20px';
             }, 300);
         }
-        console.log("Chat toggled");
+        
     }
 
     button.addEventListener('click', toggleChat);
 
-    // Listen for window resize events
-    window.addEventListener('resize', adjustWidgetLayout);
 
-    // Listen for messages from the iframe
-    window.addEventListener('message', function(event) {
-        if (event.origin !== baseUrl) return; // Ensure the message is from your app
-        
+    window.addEventListener('resize', adjustWidgetLayout);
+    
+    window.addEventListener('message', function (event) {
+        if (event.origin !== baseUrl) return;
+
         if (event.data === 'closeChatWidget') {
-            toggleChat(); // Close the widget
+            toggleChat(); 
         }
     });
 
-    console.log("Chat widget script completed");
 })();
