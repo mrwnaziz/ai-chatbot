@@ -60,59 +60,63 @@
 
     
     const styles = `
-        #chat-widget-container {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            z-index: 999999999;
-            font-family: 'Geist', sans-serif;
-        }
+    #chat-widget-container {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 999999999;
+        font-family: 'Geist', sans-serif;
+    }
+    #chat-widget-iframe-container {
+        display: none;
+        width: 400px;
+        height: 600px;
+        box-shadow: 0 5px 40px rgba(0,0,0,0.16);
+        border-radius: 8px;
+        overflow: hidden;
+        transition: all 0.3s ease-in-out;
+        transform: scale(0.95);
+        opacity: 0;
+    }
+    #chat-widget-iframe {
+        border: none;
+        width: 100%;
+        height: 100%;
+    }
+    #chat-widget-button {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background-color: #00372a;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    }
+    #chat-widget-button svg {
+        width: 30px;
+        height: 30px;
+    }
+    @media (max-width: 768px) {
         #chat-widget-iframe-container {
-            display: none;
-            width: 400px;
-            height: 600px;
-            box-shadow: 0 5px 40px rgba(0,0,0,0.16);
-            border-radius: 8px;
-            overflow: hidden;
-            transition: all 0.3s ease-in-out;
-            transform: scale(0.95);
-            opacity: 0;
-        }
-        #chat-widget-iframe {
-            border: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
             width: 100%;
             height: 100%;
+            border-radius: 0;
+            transform: translateY(100%);
         }
-        #chat-widget-button {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            background-color: #00372a;
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        #chat-widget-container.open {
+            bottom: 0;
+            right: 0;
         }
-        #chat-widget-button svg {
-            width: 30px;
-            height: 30px;
-        }
-        @media (max-width: 768px) {
-            #chat-widget-iframe-container {
-                position: fixed;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                width: 100%;
-                height: 100%;
-                border-radius: 0;
-                transform: translateY(100%);
-            }
-        }
-    `;
+    }
+`;
 
     
     const styleElement = document.createElement('style');
@@ -174,17 +178,19 @@
         const isMobileView = isMobile();
         if (iframeContainer.style.display !== 'none') {
             if (isMobileView) {
-                iframeContainer.style.width = '100vw';
-                iframeContainer.style.height = '100vh';
+                iframeContainer.style.width = '100%';
+                iframeContainer.style.height = '100%';
                 container.style.bottom = '0';
                 container.style.right = '0';
                 iframeContainer.style.transform = 'translateY(0)';
+                container.classList.add('open');
             } else {
                 iframeContainer.style.width = '400px';
                 iframeContainer.style.height = '600px';
                 container.style.bottom = '20px';
                 container.style.right = '20px';
                 iframeContainer.style.transform = 'scale(1)';
+                container.classList.remove('open');
             }
         } else {
             if (isMobileView) {
@@ -192,9 +198,10 @@
             } else {
                 iframeContainer.style.transform = 'scale(0.95)';
             }
+            container.classList.remove('open');
         }
     }
-
+    
     
     function toggleChat() {
         const isMobileView = isMobile();
