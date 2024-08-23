@@ -65,9 +65,9 @@ export function Header() {
       </div>
 
       <div className="flex items-center justify-end space-x-2">
-        <React.Suspense fallback={<div className="flex-1" />}>
+        {/* <React.Suspense fallback={<div className="flex-1" />}>
           <UserLoginButton />
-        </React.Suspense>
+        </React.Suspense> */}
         <ThemeToggle />
         <CloseButton />
       </div>
