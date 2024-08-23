@@ -38,12 +38,12 @@ export function ChatPanel({
     {
       heading: 'What are the',
       subheading: 'upcoming MISK programs?',
-      message: 'What are the upcoming MISK programs?'
+      message: 'What kind of programs does MISK offer?'
     },
     {
       heading: 'Tell me about',
       subheading: 'MISK\'s youth initiatives',
-      message: 'Tell me about MISK\'s youth initiatives'
+      message: 'How can MISK be useful for young people?'
     },
     {
       heading: 'How can I apply for',
