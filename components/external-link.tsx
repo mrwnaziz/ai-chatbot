@@ -2,13 +2,18 @@ export function ExternalLink({
   href,
   children
 }: {
-  href: string
+  href?: string
   children: React.ReactNode
 }) {
+  if (!href) {
+    return <span>{children}</span>;
+  }
+  
   return (
     <a
       href={href}
       target="_blank"
+      rel="noopener noreferrer"
       className="inline-flex flex-1 justify-center gap-1 leading-4 hover:underline"
     >
       <span>{children}</span>

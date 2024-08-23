@@ -1,11 +1,11 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import { Message } from 'ai'
+import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import remarkMath from 'remark-math'
 
 import { cn } from '@/lib/utils'
 import { CodeBlock } from '@/components/ui/codeblock'
-import { MemoizedReactMarkdown } from '@/components/markdown'
 import { IconOpenAI, IconUser } from '@/components/ui/icons'
 import { ChatMessageActions } from '@/components/chat-message-actions'
 
@@ -13,7 +13,6 @@ export interface ChatMessageProps {
   message: Message
 }
 
-// Function to detect if the text is RTL (primarily for Arabic)
 function isRTL(text: string) {
   const rtlChars = /[\u0591-\u07FF\uFB1D-\uFDFD\uFE70-\uFEFC]/
   return rtlChars.test(text)
@@ -21,9 +20,20 @@ function isRTL(text: string) {
 
 export function ChatMessage({ message, ...props }: ChatMessageProps) {
   const [isRTLText, setIsRTLText] = useState(false)
+  const messageRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     setIsRTLText(isRTL(message.content))
+  }, [message.content])
+
+  useEffect(() => {
+    if (messageRef.current) {
+      const links = messageRef.current.getElementsByTagName('a')
+      for (let i = 0; i < links.length; i++) {
+        links[i].setAttribute('target', '_blank')
+        links[i].setAttribute('rel', 'noopener noreferrer')
+      }
+    }
   }, [message.content])
 
   return (
@@ -41,11 +51,14 @@ export function ChatMessage({ message, ...props }: ChatMessageProps) {
       >
         {message.role === 'user' ? <IconUser /> : <IconOpenAI />}
       </div>
-      <div className={cn(
-        'flex-1 px-1 ml-4 space-y-2 overflow-hidden',
-        isRTLText ? 'text-right' : 'text-left'
-      )}>
-        <MemoizedReactMarkdown
+      <div 
+        className={cn(
+          'flex-1 px-1 ml-4 space-y-2 overflow-hidden',
+          isRTLText ? 'text-right' : 'text-left'
+        )}
+        ref={messageRef}
+      >
+        <ReactMarkdown
           className={cn(
             "prose break-words dark:prose-invert prose-p:leading-relaxed prose-pre:p-0",
             isRTLText ? 'direction-rtl' : 'direction-ltr'
@@ -54,13 +67,6 @@ export function ChatMessage({ message, ...props }: ChatMessageProps) {
           components={{
             p({ children }) {
               return <p className="mb-2 last:mb-0">{children}</p>
-            },
-            a({ node, href, children, ...props }) {
-              return (
-                <a href={href} target="_blank" rel="noopener noreferrer" {...props}>
-                  {children}
-                </a>
-              )
             },
             code({ node, inline, className, children, ...props }) {
               if (children.length) {
@@ -95,7 +101,7 @@ export function ChatMessage({ message, ...props }: ChatMessageProps) {
           }}
         >
           {message.content}
-        </MemoizedReactMarkdown>
+        </ReactMarkdown>
         <ChatMessageActions message={message} />
       </div>
     </div>

@@ -55,43 +55,64 @@ function filterAndFormatData(data: any[], query: string, type: 'program' | 'even
       title_ar: item.Title_Ar,
       description_en: item.Description_En,
       description_ar: item.Description_Ar,
-      Url: item.Item_URL ? item.Item_URL.replace('http://hub.misk.org.sa/', 'https://hub.misk.org.sa/') : '',
+      item_Url: item.Item_URL ? item.Item_URL.replace('http://', 'https://') : '',
+      start_date: item.Start_Date,
+      end_date: item.End_Date,
+      categories_en: item.Categories_En,
+      categories_ar: item.Categories_Ar,
+      application_type: item.Application_Type,
     };
 
-    if (type === 'program' || type === 'event') {
-      formattedItem.startDate = item.Start_Date;
-      formattedItem.endDate = item.End_Date;
-      formattedItem.applicationType = item.Application_Type;
-      formattedItem.categories_en = item.Categories_En;
-      formattedItem.categories_ar = item.Categories_Ar;
-    }
-
     if (type === 'program') {
-      formattedItem.applicationStartDate = item.Application_Start_Date;
-      formattedItem.applicationEndDate = item.Application_End_Date;
-      formattedItem.format = item.Format;
-      formattedItem.languages = item.Languages;
+      formattedItem = {
+        ...formattedItem,
+        application_start_date: item.Application_Start_Date,
+        application_end_date: item.Application_End_Date,
+        format: item.Format,
+        languages: item.Languages,
+        skills_en: item.Skills_En,
+        skills_ar: item.Skills_Ar,
+        prerequisites_en: item.Course_Prerequisties_En,
+        prerequisites_ar: item.Course_Prerequisties_Ar,
+        about_program_en: item.About_Program_En,
+        about_program_ar: item.About_Program_Ar,
+        program_modules_en: item.Program_Modules_En,
+        program_modules_ar: item.Program_Modules_Ar,
+        program_highlights_en: item.Program_Highlights_En,
+        program_highlights_ar: item.Program_Highlights_Ar,
+      };
     }
 
     if (type === 'event') {
-      formattedItem.venue_en = item.Venue_En;
-      formattedItem.venue_ar = item.Venue_Ar;
-      formattedItem.registrationStartDate = item.Registration_Start_Date_Time_En;
-      formattedItem.registrationEndDate = item.Registration_End_Date_Time_En;
-    }
-
-    if (type === 'insight') {
-      formattedItem.contentType = item.Content_Type;
-      formattedItem.timeToRead = item.Time_to_Read;
-      formattedItem.author = item.Author;
-      formattedItem.tags_en = item.Tags_En;
-      formattedItem.tags_ar = item.Tags_Ar;
+      formattedItem = {
+        ...formattedItem,
+        start_time: item.Start_Time,
+        end_time: item.End_Time,
+        event_type: item.Event_Type,
+        types: item.Types,
+        cities_en: item.Cities_En,
+        cities_ar: item.Cities_Ar,
+        locations_en: item.Locations_En,
+        locations_ar: item.Locations_Ar,
+        venue_en: item.Venue_En,
+        venue_ar: item.Venue_Ar,
+        registration_start_date_time_en: item.Registration_Start_Date_Time_En,
+        registration_start_date_time_ar: item.Registration_Start_Date_Time_Ar,
+        registration_end_date_time_en: item.Registration_End_Date_Time_En,
+        registration_end_date_time_ar: item.Registration_End_Date_Time_Ar,
+        event_description_en: item.Event_Description_En,
+        event_description_ar: item.Event_Description_Ar,
+        event_agenda_items_en: item.Event_Agenda_Items_En,
+        event_agenda_items_ar: item.Event_Agenda_Items_Ar,
+        faqs_en: item.FAQs_En,
+        faqs_ar: item.FAQs_Ar,
+        notable_speakers: item.Notable_Speakers,
+      };
     }
 
     return formattedItem;
   });
 }
-
 async function submitUserMessage(content: string) {
   'use server'
   
@@ -187,12 +208,12 @@ async function submitUserMessage(content: string) {
       
           const programsData = await fetchData("https://hub.misk.org.sa/umbraco/api/MFChatbot/GetPublishedPrograms");
           const eventsData = await fetchData("https://hub.misk.org.sa/umbraco/api/MFChatbot/GetPublishedEvents");
-          const insightsData = await fetchData("https://hub.misk.org.sa/umbraco/api/MFChatbot/GetPublishedInsights");
+          // const insightsData = await fetchData("https://hub.misk.org.sa/umbraco/api/MFChatbot/GetPublishedInsights");
       
           const filteredData = {
             programs: filterAndFormatData(programsData, query, 'program'),
             events: filterAndFormatData(eventsData, query, 'event'),
-            insights: filterAndFormatData(insightsData, query, 'insight'),
+            // insights: filterAndFormatData(insightsData, query, 'insight'),
           };
       
           const researcherPrompt = `
@@ -201,32 +222,33 @@ async function submitUserMessage(content: string) {
           If specific information is not available, clearly state this.
           Always focus on MISK-related topics and provide relevant, helpful information.
           Format your response using markdown for better readability.
-      
+
           IMPORTANT: 
           - Always use the exact titles and descriptions provided in the data. DO NOT translate or modify them.
-          - For Arabic responses, use 'title_ar' and 'description_ar'. For English responses, use 'title_en' and 'description_en'.
+          - For Arabic responses, use '_ar' fields. For English responses, use '_en' fields.
           - Always include the item_Url when mentioning specific programs, events, or insights.
           - Ensure you distinguish between programs and events. Do not mix them up.
           - When listing or describing programs, only use data from the 'programs' array.
           - When listing or describing events, only use data from the 'events' array.
           - Always use the exact item_Url provided for each program or event. Do not modify or generate URLs.
-      
-          With programs and events, always return item_Url that belongs to the item. Add /ar/ after the domain for when sharing programs and/or events in Arabic.
-      
-          Follow the Program and Events Introduction guidance:
-          1. Start with a brief overview of Misk's program categories.
-          2. Ask which area interests the user most.
-          3. Provide more information about the chosen category.
-          4. Ask if they want to hear about a specific program or an overview of available programs.
-          5. Based on their response, describe programs in detail or provide a brief overview.
-          6. Always follow up with an engaging question about program alignment or exploring other categories.
-          7. If interest is shown in a specific program, offer more details and guide towards the application.
-          8. If the user seems unsure, offer to help narrow down options based on their goals or desired skills.
-      
+
+          For Programs:
+          - Provide detailed information about program dates, including start date, end date, and application dates when relevant.
+          - Include information about the program format, languages, categories, and skills when available.
+          - When discussing prerequisites, use the 'prerequisites_en' or 'prerequisites_ar' fields as appropriate.
+          - Include relevant information from 'about_program', 'program_modules', and 'program_highlights' fields.
+
+          For Events:
+          - Provide detailed information about event dates and times, including start date/time and end date/time.
+          - Include information about the event type, format (online/offline), and location (cities, venues) when available.
+          - Mention registration start and end dates/times if provided.
+          - Include event description, agenda items, and FAQs if available.
+          - Mention notable speakers if the information is provided.
+
           Language: ${language}
           User query: ${query}
           Available information: ${JSON.stringify(filteredData)}
-      
+
           Provide a comprehensive answer:
           `
       
