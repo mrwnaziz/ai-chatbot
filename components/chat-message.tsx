@@ -1,6 +1,4 @@
-// Inspired by Chatbot-UI and modified to fit the needs of this project
-// @see https://github.com/mckaywrigley/chatbot-ui/blob/main/components/Chat/ChatMessage.tsx
-
+import React, { useEffect, useState } from 'react'
 import { Message } from 'ai'
 import remarkGfm from 'remark-gfm'
 import remarkMath from 'remark-math'
@@ -22,7 +20,11 @@ function isRTL(text: string) {
 }
 
 export function ChatMessage({ message, ...props }: ChatMessageProps) {
-  const isRTLText = isRTL(message.content)
+  const [isRTLText, setIsRTLText] = useState(false)
+
+  useEffect(() => {
+    setIsRTLText(isRTL(message.content))
+  }, [message.content])
 
   return (
     <div
@@ -52,6 +54,13 @@ export function ChatMessage({ message, ...props }: ChatMessageProps) {
           components={{
             p({ children }) {
               return <p className="mb-2 last:mb-0">{children}</p>
+            },
+            a({ node, href, children, ...props }) {
+              return (
+                <a href={href} target="_blank" rel="noopener noreferrer" {...props}>
+                  {children}
+                </a>
+              )
             },
             code({ node, inline, className, children, ...props }) {
               if (children.length) {
