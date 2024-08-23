@@ -55,7 +55,7 @@ function filterAndFormatData(data: any[], query: string, type: 'program' | 'even
       title_ar: item.Title_Ar,
       description_en: item.Description_En,
       description_ar: item.Description_Ar,
-      Url: item.Item_URL ? item.Item_URL.replace('https://prod-hub-web/', 'https://hub.misk.org.sa/') : '',
+      Url: item.Item_URL ? item.Item_URL.replace('http://hub.misk.org.sa/', 'https://hub.misk.org.sa/') : '',
     };
 
     if (type === 'program' || type === 'event') {
