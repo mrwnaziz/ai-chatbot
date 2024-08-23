@@ -5,9 +5,16 @@
         try {
             const scripts = document.getElementsByTagName('script');
             const currentScript = scripts[scripts.length - 1];
-            const scriptUrl = new URL(currentScript.src);
-            console.log('Script base URL:', scriptUrl.origin);
-            return scriptUrl.origin;
+            console.log('Current script src:', currentScript.src);
+            
+            // Handle relative URLs
+            const fullUrl = new URL(currentScript.src, window.location.origin);
+            console.log('Full URL:', fullUrl.href);
+            
+            // Use the origin of the script URL, or fall back to the page origin
+            const baseUrl = fullUrl.origin !== 'null' ? fullUrl.origin : window.location.origin;
+            console.log('Determined base URL:', baseUrl);
+            return baseUrl;
         } catch (error) {
             console.error('Error getting script base URL:', error);
             console.log('Falling back to window.location.origin');
@@ -15,19 +22,10 @@
         }
     }
 
-
-
-    
     const baseUrl = getScriptBaseUrl();
     console.log('Base URL:', baseUrl);
-    
-    const isEmbedded = window.location.origin !== baseUrl;
-    console.log('Is embedded:', isEmbedded);
 
-    if (!isEmbedded) {
-        console.log('Script is not embedded. Exiting.');
-        return;
-    }
+    
 
     // const currentDomain = window.location.hostname;
     // const isAllowed = isAllowedDomain(currentDomain);
@@ -44,7 +42,6 @@
         console.log('Is mobile view:', mobile);
         return mobile;
     }
-
 
     
     const styles = `
@@ -107,7 +104,6 @@
 `;
 
     
-console.log('Injecting styles');
 const styleElement = document.createElement('style');
 styleElement.textContent = styles;
 document.head.appendChild(styleElement);
