@@ -1,6 +1,10 @@
 (function () {
     const baseUrl = 'https://miskai.vercel.app';
 
+    if (window.location.origin === baseUrl) {
+        return; 
+    }
+
     function isMobile() {
         return window.innerWidth <= 768;
     }
@@ -166,3 +170,4 @@
         }
     });
 })();
+
