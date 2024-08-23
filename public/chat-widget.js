@@ -1,42 +1,34 @@
 (function () {
-    // const allowedDomains = [
-    //     'hub.misk.org.sa',
-    //     'miskhubuat.misk.org.sa',
-    //     'youthdev.misk.org.sa',
-    //     '*.misk.org.sa',
-    //     '*.vercel.app',
-    //     '*.pages.dev',
-    // ];
+    console.log('Chat widget script started');
 
-    // function isAllowedDomain(domain) {
-    //     return allowedDomains.some(pattern => {
-    //         if (pattern.startsWith('*.')) {
-                
-    //             const baseDomain = pattern.slice(2);
-    //             return domain === baseDomain || domain.endsWith('.' + baseDomain);
-    //         } else {
-                
-    //             return domain === pattern;
-    //         }
-    //     });
-    // }
-
-
-    
     function getScriptBaseUrl() {
         try {
             const scripts = document.getElementsByTagName('script');
             const currentScript = scripts[scripts.length - 1];
             const scriptUrl = new URL(currentScript.src);
+            console.log('Script base URL:', scriptUrl.origin);
             return scriptUrl.origin;
         } catch (error) {
+            console.error('Error getting script base URL:', error);
+            console.log('Falling back to window.location.origin');
             return window.location.origin;
         }
     }
 
+
+
     
     const baseUrl = getScriptBaseUrl();
+    console.log('Base URL:', baseUrl);
     
+    const isEmbedded = window.location.origin !== baseUrl;
+    console.log('Is embedded:', isEmbedded);
+
+    if (!isEmbedded) {
+        console.log('Script is not embedded. Exiting.');
+        return;
+    }
+
     // const currentDomain = window.location.hostname;
     // const isAllowed = isAllowedDomain(currentDomain);
     
@@ -46,16 +38,13 @@
     // }
 
     
-    const isEmbedded = window.location.origin !== baseUrl;
     
-
-    if (!isEmbedded) {
-        return;
-    }
-
     function isMobile() {
-        return window.innerWidth <= 768;
+        const mobile = window.innerWidth <= 768;
+        console.log('Is mobile view:', mobile);
+        return mobile;
     }
+
 
     
     const styles = `
@@ -118,32 +107,30 @@
 `;
 
     
-    const styleElement = document.createElement('style');
-    styleElement.textContent = styles;
-    document.head.appendChild(styleElement);
-    
+console.log('Injecting styles');
+const styleElement = document.createElement('style');
+styleElement.textContent = styles;
+document.head.appendChild(styleElement);
+console.log('Styles injected');
 
-    
-    const container = document.createElement('div');
-    container.id = 'chat-widget-container';
+console.log('Creating DOM elements');
+const container = document.createElement('div');
+container.id = 'chat-widget-container';
 
-    
-    const iframeContainer = document.createElement('div');
-    iframeContainer.id = 'chat-widget-iframe-container';
+const iframeContainer = document.createElement('div');
+iframeContainer.id = 'chat-widget-iframe-container';
 
-    
-    const iframe = document.createElement('iframe');
-    iframe.id = 'chat-widget-iframe';
-    iframe.src = `${baseUrl}/`;
-    
+const iframe = document.createElement('iframe');
+iframe.id = 'chat-widget-iframe';
+iframe.src = `${baseUrl}/`;
+console.log('Iframe source:', iframe.src);
 
-    
-    iframeContainer.appendChild(iframe);
+iframeContainer.appendChild(iframe);
 
-    
-    const button = document.createElement('button');
-    button.id = 'chat-widget-button';
-    button.innerHTML = `
+const button = document.createElement('button');
+button.id = 'chat-widget-button';
+
+button.innerHTML = `
         <svg width="100" height="90" viewBox="0 0 100 90" fill="none" xmlns="http://www.w3.org/2000/svg">
 <g clip-path="url(#clip0_13648_57885)">
 <path d="M70.9167 34.5626C70.9167 52.4762 56.3751 67.0178 38.4615 67.0178C31.4015 67.0178 24.7629 64.6996 19.4942 60.9062L4.53107 68.177L11.8019 53.3192C8.11379 48.0505 5.90093 41.6227 5.90093 34.668C6.0063 16.649 20.5479 2.10742 38.4615 2.10742C56.3751 2.10742 70.9167 16.649 70.9167 34.5626Z" fill="#00372A" stroke="white" stroke-width="4" stroke-miterlimit="10"/>
@@ -168,12 +155,12 @@
     container.appendChild(iframeContainer);
     container.appendChild(button);
 
-    
+    console.log('Appending chat widget to body');
     document.body.appendChild(container);
-    
+    console.log('Chat widget appended to body');
 
-    
     function adjustWidgetLayout() {
+        console.log('Adjusting widget layout');
         const isMobileView = isMobile();
         if (iframeContainer.style.display !== 'none') {
             if (isMobileView) {
@@ -198,11 +185,15 @@
                 iframeContainer.style.transform = 'scale(0.95)';
             }
             container.classList.remove('open');
+            
         }
+        console.log('Widget layout adjusted');
+
     }
     
     
     function toggleChat() {
+        console.log('Toggling chat');
         const isMobileView = isMobile();
         if (iframeContainer.style.display === 'none') {
             iframeContainer.style.display = 'block';
@@ -221,20 +212,27 @@
                 container.style.right = '20px';
             }, 300);
         }
-        
+        console.log('Chat toggled');
     }
 
+    console.log('Adding event listeners');
     button.addEventListener('click', toggleChat);
-
-
     window.addEventListener('resize', adjustWidgetLayout);
     
     window.addEventListener('message', function (event) {
-        if (event.origin !== baseUrl) return;
+        console.log('Received message:', event.data);
+        console.log('Message origin:', event.origin);
+        console.log('Expected origin:', baseUrl);
+        if (event.origin !== baseUrl) {
+            console.log('Message origin does not match base URL. Ignoring.');
+            return;
+        }
 
         if (event.data === 'closeChatWidget') {
+            console.log('Closing chat widget');
             toggleChat(); 
         }
     });
 
+    console.log('Chat widget script finished initializing');
 })();
