@@ -1,25 +1,25 @@
 (function () {
-    const allowedDomains = [
-        'hub.misk.org.sa',
-        'miskhubuat.misk.org.sa',
-        'youthdev.misk.org.sa',
-        '*.misk.org.sa',
-        '*.vercel.app',
-        '*.pages.dev',
-    ];
+    // const allowedDomains = [
+    //     'hub.misk.org.sa',
+    //     'miskhubuat.misk.org.sa',
+    //     'youthdev.misk.org.sa',
+    //     '*.misk.org.sa',
+    //     '*.vercel.app',
+    //     '*.pages.dev',
+    // ];
 
-    function isAllowedDomain(domain) {
-        return allowedDomains.some(pattern => {
-            if (pattern.startsWith('*.')) {
+    // function isAllowedDomain(domain) {
+    //     return allowedDomains.some(pattern => {
+    //         if (pattern.startsWith('*.')) {
                 
-                const baseDomain = pattern.slice(2);
-                return domain === baseDomain || domain.endsWith('.' + baseDomain);
-            } else {
+    //             const baseDomain = pattern.slice(2);
+    //             return domain === baseDomain || domain.endsWith('.' + baseDomain);
+    //         } else {
                 
-                return domain === pattern;
-            }
-        });
-    }
+    //             return domain === pattern;
+    //         }
+    //     });
+    // }
 
 
     
@@ -37,20 +37,19 @@
     
     const baseUrl = getScriptBaseUrl();
     
-    const currentDomain = window.location.hostname;
-    const isAllowed = isAllowedDomain(currentDomain);
+    // const currentDomain = window.location.hostname;
+    // const isAllowed = isAllowedDomain(currentDomain);
     
-    if (!isAllowed) {
+    // if (!isAllowed) {
         
-        return; 
-    }
+    //     return; 
+    // }
 
     
     const isEmbedded = window.location.origin !== baseUrl;
     
 
     if (!isEmbedded) {
-        
         return;
     }
 
