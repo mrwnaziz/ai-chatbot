@@ -169,5 +169,9 @@
             toggleChat(); 
         }
     });
-})();
 
+    iframe.onload = function() {
+        iframeContainer.style.display = 'none';
+        button.style.display = 'flex';
+    };
+})();
