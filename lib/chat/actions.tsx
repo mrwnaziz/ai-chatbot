@@ -10,6 +10,7 @@ import {
 } from 'ai/rsc'
 import { openai } from '@ai-sdk/openai'
 import { generateText } from 'ai'
+import { filterAndFormatData } from '@/lib/dataUtils'
 
 import {
   BotMessage,
@@ -25,32 +26,22 @@ import { saveChat } from '@/app/actions'
 import { SpinnerMessage, UserMessage } from '@/components/stocks/message'
 import { Chat, Message } from '@/lib/types'
 import { auth } from '@/auth'
-import { filterAndFormatData } from '@/lib/dataUtils'
 
 async function fetchMiskData(dataType: 'programs' | 'events' | 'insights'): Promise<any[]> {
   const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
   const url = `${baseUrl}/api/misk${dataType.charAt(0).toUpperCase() + dataType.slice(1)}`;
   
   const response = await fetch(url);
+
   if (!response.ok) {
     throw new Error(`HTTP error! status: ${response.status}`);
   }
   return await response.json();
 }
 
-async function queryMiskData(query: string, dataTypes: ('programs' | 'events' | 'insights')[]): Promise<any[]> {
-  const results = [];
-
-  for (const dataType of dataTypes) {
-    const data = await fetchMiskData(dataType);
-    const filteredData = filterAndFormatData(data, query, dataType);
-    
-    // Only include the top 5 most relevant results for each data type
-    results.push(...filteredData.slice(0, 5));
-  }
-
-  // Limit the total number of results to 15
-  return results.slice(0, 15);
+async function searchMiskData(dataType: 'programs' | 'events' | 'insights', query: string): Promise<any[]> {
+  const allData = await fetchMiskData(dataType);
+  return filterAndFormatData(allData, query, dataType);
 }
 
 async function submitUserMessage(content: string) {
@@ -70,7 +61,8 @@ async function submitUserMessage(content: string) {
     ]
   })
 
-  const filteredData = await queryMiskData(content, ['programs', 'events', 'insights']);
+  let textStream: undefined | ReturnType<typeof createStreamableValue<string>>
+  let textNode: undefined | React.ReactNode
 
   const result = await streamUI({
     model: openai('gpt-4o'),
@@ -110,6 +102,31 @@ async function submitUserMessage(content: string) {
         name: message.name
       }))
     ],
+    text: ({ content, done, delta }) => {
+      if (!textStream) {
+        textStream = createStreamableValue('')
+        textNode = <BotMessage content={textStream.value} />
+      }
+
+      if (done) {
+        textStream.done()
+        aiState.done({
+          ...aiState.get(),
+          messages: [
+            ...aiState.get().messages,
+            {
+              id: nanoid(),
+              role: 'assistant',
+              content
+            }
+          ]
+        })
+      } else {
+        textStream.update(delta)
+      }
+
+      return textNode
+    },
     tools: {
       researcher: {
         description: 'Analyzes MISK information to answer user queries',
@@ -119,6 +136,16 @@ async function submitUserMessage(content: string) {
         }),
         generate: async function* ({ query, language }) {
           yield <div className="flex item-center gap-2"><SpinnerMessage /> Analyzing programs and events...</div>
+      
+          const programsData = await searchMiskData('programs', query);
+          const eventsData = await searchMiskData('events', query);
+          const insightsData = await searchMiskData('insights', query);
+      
+          const filteredData = {
+            programs: programsData,
+            events: eventsData,
+            insights: insightsData,
+          };
       
           const researcherPrompt = `
           You are a researcher for MISK Hub. Analyze the provided information about MISK programs, events, and insights.
@@ -131,8 +158,23 @@ async function submitUserMessage(content: string) {
           - Always use the exact titles and descriptions provided in the data. DO NOT translate or modify them.
           - For Arabic responses, use '_ar' fields. For English responses, use '_en' fields.
           - Always include the item_Url when mentioning specific programs, events, or insights.
-          - Ensure you distinguish between programs, events, and insights. Do not mix them up.
-          - Always use the exact item_Url provided for each program, event, or insight. Do not modify or generate URLs.
+          - Ensure you distinguish between programs and events. Do not mix them up.
+          - When listing or describing programs, only use data from the 'programs' array.
+          - When listing or describing events, only use data from the 'events' array.
+          - Always use the exact item_Url provided for each program or event. Do not modify or generate URLs.
+
+          For Programs:
+          - Provide detailed information about program dates, including start date, end date, and application dates when relevant.
+          - Include information about the program format, languages, categories, and skills when available.
+          - When discussing prerequisites, use the 'prerequisites_en' or 'prerequisites_ar' fields as appropriate.
+          - Include relevant information from 'about_program', 'program_modules', and 'program_highlights' fields.
+
+          For Events:
+          - Provide detailed information about event dates and times, including start date/time and end date/time.
+          - Include information about the event type, format (online/offline), and location (cities, venues) when available.
+          - Mention registration start and end dates/times if provided.
+          - Include event description, agenda items, and FAQs if available.
+          - Mention notable speakers if the information is provided.
 
           Language: ${language}
           User query: ${query}
@@ -148,7 +190,46 @@ async function submitUserMessage(content: string) {
             maxTokens: 4000,
           })
       
-          return <BotMessage content={researcherResponse} />
+          const toolCallId = nanoid()
+      
+          aiState.done({
+            ...aiState.get(),
+            messages: [
+              ...aiState.get().messages,
+              {
+                id: nanoid(),
+                role: 'assistant',
+                content: [
+                  {
+                    type: 'tool-call',
+                    toolName: 'researcher',
+                    toolCallId,
+                    args: { query, language }
+                  }
+                ]
+              },
+              {
+                id: nanoid(),
+                role: 'tool',
+                content: [
+                  {
+                    type: 'tool-result',
+                    toolName: 'researcher',
+                    toolCallId,
+                    result: filteredData
+                  }
+                ]
+              }
+            ]
+          })
+      
+          let formattedResponse = researcherResponse
+      
+          if (language === 'ar') {
+            formattedResponse = modifyUrlsForArabic(formattedResponse)
+          }
+      
+          return <BotMessage content={formattedResponse} />
         }
       },
       follow_up_generator: {

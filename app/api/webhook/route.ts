@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
-import { writeFile } from 'fs/promises';
-import path from 'path';
+import { put, del, list } from '@vercel/blob';
 
 const BASE_URL = 'https://hub.misk.org.sa/umbraco/api/MFChatbot/';
 const ENDPOINTS = {
@@ -8,21 +7,37 @@ const ENDPOINTS = {
   events: 'GetPublishedEvents',
   insights: 'GetPublishedInsights'
 };
-const PUBLIC_DIR = path.join(process.cwd(), 'public');
 
-async function fetchAndSaveData(endpoint: string, fileName: string) {
+async function deleteOldFiles() {
+  const { blobs } = await list();
+  for (const blob of blobs) {
+    if (['miskPrograms.json', 'miskEvents.json', 'miskInsights.json'].includes(blob.pathname)) {
+      await del(blob.url);
+    }
+  }
+}
+
+async function fetchAndSaveData(endpoint: string, blobName: string) {
   const url = BASE_URL + endpoint;
   const response = await fetch(url);
   if (!response.ok) {
     throw new Error(`HTTP error! status: ${response.status} for ${endpoint}`);
   }
   const data = await response.json();
-  const filePath = path.join(PUBLIC_DIR, fileName);
-  await writeFile(filePath, JSON.stringify(data, null, 2));
+
+  // Save data to Vercel Blob with public access
+  await put(blobName, JSON.stringify(data), {
+    contentType: 'application/json',
+    access: 'public',
+  });
 }
 
 export async function POST() {
   try {
+    // Delete old files first
+    await deleteOldFiles();
+
+    // Then fetch and save new data
     await Promise.all([
       fetchAndSaveData(ENDPOINTS.programs, 'miskPrograms.json'),
       fetchAndSaveData(ENDPOINTS.events, 'miskEvents.json'),
