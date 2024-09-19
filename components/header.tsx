@@ -6,9 +6,6 @@ import { cn } from '@/lib/utils'
 import { auth } from '@/auth'
 import { Button, buttonVariants } from '@/components/ui/button'
 import {
-  IconGitHub,
-  IconNextChat,
-  IconSeparator,
   IconVercel,
 } from '@/components/ui/icons'
 import { UserMenu } from '@/components/user-menu'

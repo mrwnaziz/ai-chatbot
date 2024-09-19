@@ -69,3 +69,32 @@ This library is created by [Vercel](https://vercel.com) and [Next.js](https://ne
 - Jared Palmer ([@jaredpalmer](https://twitter.com/jaredpalmer)) - [Vercel](https://vercel.com)
 - Shu Ding ([@shuding\_](https://twitter.com/shuding_)) - [Vercel](https://vercel.com)
 - shadcn ([@shadcn](https://twitter.com/shadcn)) - [Vercel](https://vercel.com)
+
+# Misk Programs Data Webhook
+
+This project includes a webhook endpoint to trigger revalidation of Misk programs data. Here's how to use it:
+
+## Webhook Usage Instructions
+
+1. Deploy your application to your hosting platform (e.g., Vercel, Netlify, etc.).
+
+2. Note your application's domain (e.g., https://your-app-domain.com).
+
+3. The webhook endpoint will be available at:
+   `https://your-app-domain.com/api/webhook`
+
+4. In your CMS or data source where the Misk programs data is managed:
+   - Set up a webhook or automation to make a POST request to the above URL whenever the data is updated.
+   - The POST request doesn't require any specific payload.
+
+5. When the webhook is triggered, it will:
+   - Fetch the latest data from the Misk programs API
+   - Revalidate the cached data in your application
+
+6. The webhook will respond with:
+   - A 200 status code and a success message if the update was successful
+   - A 500 status code and an error message if there was a problem
+
+## Testing the Webhook
+
+You can test the webhook using curl or any API testing tool:

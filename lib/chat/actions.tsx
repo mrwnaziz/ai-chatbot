@@ -25,8 +25,12 @@ import { saveChat } from '@/app/actions'
 import { SpinnerMessage, UserMessage } from '@/components/stocks/message'
 import { Chat, Message } from '@/lib/types'
 import { auth } from '@/auth'
+import { filterAndFormatData } from '@/lib/dataUtils'
 
-async function fetchData(url: string): Promise<any> {
+async function fetchMiskData(dataType: 'programs' | 'events' | 'insights'): Promise<any[]> {
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+  const url = `${baseUrl}/api/misk${dataType.charAt(0).toUpperCase() + dataType.slice(1)}`;
+  
   const response = await fetch(url);
   if (!response.ok) {
     throw new Error(`HTTP error! status: ${response.status}`);
@@ -34,85 +38,21 @@ async function fetchData(url: string): Promise<any> {
   return await response.json();
 }
 
-function filterAndFormatData(data: any[], query: string, type: 'program' | 'event' | 'insight'): any[] {
-  const keywords = query.toLowerCase().split(' ');
-  const currentDate = new Date();
+async function queryMiskData(query: string, dataTypes: ('programs' | 'events' | 'insights')[]): Promise<any[]> {
+  const results = [];
 
-  return data.filter(item => {
-    if (type === 'program' || type === 'event') {
-      const startDate = new Date(item.Start_Date);
-      const endDate = new Date(item.Application_End_Date || item.End_Date);
-      return startDate >= currentDate || endDate >= currentDate;
-    }
-    return true;
-  }).filter(item => 
-    keywords.some(keyword => 
-      JSON.stringify(item).toLowerCase().includes(keyword)
-    )
-  ).map(item => {
-    let formattedItem: any = {
-      title_en: item.Title_En,
-      title_ar: item.Title_Ar,
-      description_en: item.Description_En,
-      description_ar: item.Description_Ar,
-      item_Url: item.Item_URL ? item.Item_URL.replace('http://', 'https://') : '',
-      start_date: item.Start_Date,
-      end_date: item.End_Date,
-      categories_en: item.Categories_En,
-      categories_ar: item.Categories_Ar,
-      application_type: item.Application_Type,
-    };
+  for (const dataType of dataTypes) {
+    const data = await fetchMiskData(dataType);
+    const filteredData = filterAndFormatData(data, query, dataType);
+    
+    // Only include the top 5 most relevant results for each data type
+    results.push(...filteredData.slice(0, 5));
+  }
 
-    if (type === 'program') {
-      formattedItem = {
-        ...formattedItem,
-        application_start_date: item.Application_Start_Date,
-        application_end_date: item.Application_End_Date,
-        format: item.Format,
-        languages: item.Languages,
-        skills_en: item.Skills_En,
-        skills_ar: item.Skills_Ar,
-        prerequisites_en: item.Course_Prerequisties_En,
-        prerequisites_ar: item.Course_Prerequisties_Ar,
-        about_program_en: item.About_Program_En,
-        about_program_ar: item.About_Program_Ar,
-        program_modules_en: item.Program_Modules_En,
-        program_modules_ar: item.Program_Modules_Ar,
-        program_highlights_en: item.Program_Highlights_En,
-        program_highlights_ar: item.Program_Highlights_Ar,
-      };
-    }
-
-    if (type === 'event') {
-      formattedItem = {
-        ...formattedItem,
-        start_time: item.Start_Time,
-        end_time: item.End_Time,
-        event_type: item.Event_Type,
-        types: item.Types,
-        cities_en: item.Cities_En,
-        cities_ar: item.Cities_Ar,
-        locations_en: item.Locations_En,
-        locations_ar: item.Locations_Ar,
-        venue_en: item.Venue_En,
-        venue_ar: item.Venue_Ar,
-        registration_start_date_time_en: item.Registration_Start_Date_Time_En,
-        registration_start_date_time_ar: item.Registration_Start_Date_Time_Ar,
-        registration_end_date_time_en: item.Registration_End_Date_Time_En,
-        registration_end_date_time_ar: item.Registration_End_Date_Time_Ar,
-        event_description_en: item.Event_Description_En,
-        event_description_ar: item.Event_Description_Ar,
-        event_agenda_items_en: item.Event_Agenda_Items_En,
-        event_agenda_items_ar: item.Event_Agenda_Items_Ar,
-        faqs_en: item.FAQs_En,
-        faqs_ar: item.FAQs_Ar,
-        notable_speakers: item.Notable_Speakers,
-      };
-    }
-
-    return formattedItem;
-  });
+  // Limit the total number of results to 15
+  return results.slice(0, 15);
 }
+
 async function submitUserMessage(content: string) {
   'use server'
   
@@ -130,8 +70,7 @@ async function submitUserMessage(content: string) {
     ]
   })
 
-  let textStream: undefined | ReturnType<typeof createStreamableValue<string>>
-  let textNode: undefined | React.ReactNode
+  const filteredData = await queryMiskData(content, ['programs', 'events', 'insights']);
 
   const result = await streamUI({
     model: openai('gpt-4o'),
@@ -171,31 +110,6 @@ async function submitUserMessage(content: string) {
         name: message.name
       }))
     ],
-    text: ({ content, done, delta }) => {
-      if (!textStream) {
-        textStream = createStreamableValue('')
-        textNode = <BotMessage content={textStream.value} />
-      }
-
-      if (done) {
-        textStream.done()
-        aiState.done({
-          ...aiState.get(),
-          messages: [
-            ...aiState.get().messages,
-            {
-              id: nanoid(),
-              role: 'assistant',
-              content
-            }
-          ]
-        })
-      } else {
-        textStream.update(delta)
-      }
-
-      return textNode
-    },
     tools: {
       researcher: {
         description: 'Analyzes MISK information to answer user queries',
@@ -205,16 +119,6 @@ async function submitUserMessage(content: string) {
         }),
         generate: async function* ({ query, language }) {
           yield <div className="flex item-center gap-2"><SpinnerMessage /> Analyzing programs and events...</div>
-      
-          const programsData = await fetchData("https://hub.misk.org.sa/umbraco/api/MFChatbot/GetPublishedPrograms");
-          const eventsData = await fetchData("https://hub.misk.org.sa/umbraco/api/MFChatbot/GetPublishedEvents");
-          // const insightsData = await fetchData("https://hub.misk.org.sa/umbraco/api/MFChatbot/GetPublishedInsights");
-      
-          const filteredData = {
-            programs: filterAndFormatData(programsData, query, 'program'),
-            events: filterAndFormatData(eventsData, query, 'event'),
-            // insights: filterAndFormatData(insightsData, query, 'insight'),
-          };
       
           const researcherPrompt = `
           You are a researcher for MISK Hub. Analyze the provided information about MISK programs, events, and insights.
@@ -227,23 +131,8 @@ async function submitUserMessage(content: string) {
           - Always use the exact titles and descriptions provided in the data. DO NOT translate or modify them.
           - For Arabic responses, use '_ar' fields. For English responses, use '_en' fields.
           - Always include the item_Url when mentioning specific programs, events, or insights.
-          - Ensure you distinguish between programs and events. Do not mix them up.
-          - When listing or describing programs, only use data from the 'programs' array.
-          - When listing or describing events, only use data from the 'events' array.
-          - Always use the exact item_Url provided for each program or event. Do not modify or generate URLs.
-
-          For Programs:
-          - Provide detailed information about program dates, including start date, end date, and application dates when relevant.
-          - Include information about the program format, languages, categories, and skills when available.
-          - When discussing prerequisites, use the 'prerequisites_en' or 'prerequisites_ar' fields as appropriate.
-          - Include relevant information from 'about_program', 'program_modules', and 'program_highlights' fields.
-
-          For Events:
-          - Provide detailed information about event dates and times, including start date/time and end date/time.
-          - Include information about the event type, format (online/offline), and location (cities, venues) when available.
-          - Mention registration start and end dates/times if provided.
-          - Include event description, agenda items, and FAQs if available.
-          - Mention notable speakers if the information is provided.
+          - Ensure you distinguish between programs, events, and insights. Do not mix them up.
+          - Always use the exact item_Url provided for each program, event, or insight. Do not modify or generate URLs.
 
           Language: ${language}
           User query: ${query}
@@ -259,46 +148,7 @@ async function submitUserMessage(content: string) {
             maxTokens: 4000,
           })
       
-          const toolCallId = nanoid()
-      
-          aiState.done({
-            ...aiState.get(),
-            messages: [
-              ...aiState.get().messages,
-              {
-                id: nanoid(),
-                role: 'assistant',
-                content: [
-                  {
-                    type: 'tool-call',
-                    toolName: 'researcher',
-                    toolCallId,
-                    args: { query, language }
-                  }
-                ]
-              },
-              {
-                id: nanoid(),
-                role: 'tool',
-                content: [
-                  {
-                    type: 'tool-result',
-                    toolName: 'researcher',
-                    toolCallId,
-                    result: filteredData
-                  }
-                ]
-              }
-            ]
-          })
-      
-          let formattedResponse = researcherResponse
-      
-          if (language === 'ar') {
-            formattedResponse = modifyUrlsForArabic(formattedResponse)
-          }
-      
-          return <BotMessage content={formattedResponse} />
+          return <BotMessage content={researcherResponse} />
         }
       },
       follow_up_generator: {
