@@ -71,6 +71,7 @@ export function Chat({ id, className, session, missingKeys }: ChatProps) {
           <EmptyScreen />
         )}
         <div className="w-full h-px" ref={visibilityRef} />
+        
       </div>
       <ChatPanel
         id={id}

@@ -1,5 +1,6 @@
 import * as React from 'react'
 import Link from 'next/link'
+import { Badge } from '@/components/ui/badge'
 
 import { cn } from '@/lib/utils'
 import { auth } from '@/auth'
@@ -33,7 +34,7 @@ async function UserOrLogin() {
         <Link href="/new" rel="nofollow" className="flex items-center text-sm">
           <IconVercel className="size-5 mr-2 dark:hidden" />
           <IconVercel className="hidden size-5 mr-2 dark:block" />
-          <span>Chat with MiskHub</span>
+          <span>MiskGPT</span> <Badge className='ml-2 text-xs' variant="secondary" color="green">Beta</Badge>
         </Link>
       )}
     </>
